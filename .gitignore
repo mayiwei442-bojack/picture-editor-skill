@@ -20,3 +20,6 @@ next-env.d.ts
 
 # local review artifacts
 /.codex-doc-review
+
+# Vercel project metadata
+/.vercel
