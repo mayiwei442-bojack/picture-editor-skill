@@ -149,7 +149,12 @@ export async function analyzeImage(
           },
         ],
         temperature: 0.28,
-        max_completion_tokens: 2048,
+        max_completion_tokens: skillId === "scene-to-art" ? 4096 : 2048,
+        // This constrained, single-pass extraction needs a complete JSON answer,
+        // not a reasoning trace that can consume the completion budget.
+        ...(skillId === "scene-to-art" && config.chatModel === "MiniMax-M3"
+          ? { thinking: { type: "disabled" } }
+          : {}),
       }),
       signal: AbortSignal.timeout(120_000),
     });
@@ -167,7 +172,18 @@ export async function analyzeImage(
   const payload: unknown = await response.json();
   const content = extractMessageContent(payload);
   if (!content) throw new GenerationError("MiniMax 没有返回画面分析，请重新生成。");
-  return { plan: normalizePlan(parseJsonObject(content), skillId), referenceDataUrl: imageUrl };
+  try {
+    return { plan: normalizePlan(parseJsonObject(content), skillId), referenceDataUrl: imageUrl };
+  } catch (cause) {
+    const firstChoice = isRecord(payload) && Array.isArray(payload.choices) ? payload.choices[0] : null;
+    // Operational metadata only: never log the photograph, prompt or reasoning.
+    console.warn("MiniMax plan validation failed", {
+      skillId,
+      finishReason: isRecord(firstChoice) ? firstChoice.finish_reason : undefined,
+      responseCharacters: content.length,
+    });
+    throw cause;
+  }
 }
 
 function findBase64(payload: unknown, acceptString = false): string | null {

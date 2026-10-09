@@ -24,6 +24,9 @@ function loadModule(relativePath) {
   const localRequire = (specifier) => {
     if (specifier === "server-only") return {};
     if (specifier.startsWith("@/")) return loadModule(`src/${specifier.slice(2)}.ts`);
+    if (specifier.startsWith(".") && existsSync(path.resolve(path.dirname(filename), `${specifier}.ts`))) {
+      return loadModule(path.relative(root, path.resolve(path.dirname(filename), `${specifier}.ts`)));
+    }
     return nativeRequire(specifier);
   };
   new Function("require", "module", "exports", source)(localRequire, moduleRecord, moduleRecord.exports);
@@ -72,6 +75,35 @@ test("scene poster preserves the output and typography contract under long input
 test("other skills retain their existing no-readable-text prompt behavior", () => {
   for (const id of skillIds.filter((id) => id !== "scene-to-art")) {
     assert.match(buildPanelPrompt(id, plan, "A source-derived visual composition."), /no readable text/);
+  }
+});
+
+test("scene analysis requests a direct JSON answer with enough output budget", async () => {
+  const { analyzeImage } = loadModule("src/lib/server/minimax.ts");
+  const originalFetch = globalThis.fetch;
+  const originalKey = process.env.MINIMAX_API_KEY;
+  const originalModel = process.env.MINIMAX_CHAT_MODEL;
+  process.env.MINIMAX_API_KEY = "unit-test-only";
+  process.env.MINIMAX_CHAT_MODEL = "MiniMax-M3";
+  let sent;
+  globalThis.fetch = async (_url, options) => {
+    sent = JSON.parse(options.body);
+    return Response.json({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify({
+      ...plan, panels: [{ key: "poster", aspectRatio: "3:4", prompt: "A source-specific expressive painting poster." }],
+    }) } }] });
+  };
+  try {
+    const result = await analyzeImage(Buffer.from("fixture"), "image/png", "scene-to-art", 0);
+    assert.deepEqual(sent.thinking, { type: "disabled" });
+    assert.equal(sent.max_completion_tokens, 4096);
+    assert.equal(result.plan.title, "EMBER LINE");
+    assert.equal(result.plan.panels[0].key, "poster");
+  } finally {
+    globalThis.fetch = originalFetch;
+    if (originalKey === undefined) delete process.env.MINIMAX_API_KEY;
+    else process.env.MINIMAX_API_KEY = originalKey;
+    if (originalModel === undefined) delete process.env.MINIMAX_CHAT_MODEL;
+    else process.env.MINIMAX_CHAT_MODEL = originalModel;
   }
 });
 
