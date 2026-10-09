@@ -19,6 +19,8 @@ export type AnalysisPlan = {
   title: string;
   episodeTitle: string;
   phrase: string;
+  posterTitlePlacement?: "top" | "bottom" | "left";
+  posterTitleColor?: string;
   panels: Array<{ key: string; aspectRatio: "16:9" | "3:2" | "3:4"; prompt: string }>;
 };
 
@@ -113,6 +115,12 @@ function normalizePlan(raw: UnknownRecord, skillId: SkillId): AnalysisPlan {
     title: textValue(raw.title, "Field Notes").slice(0, 80),
     episodeTitle: textValue(raw.episodeTitle, "The Long Return").slice(0, 80),
     phrase: textValue(raw.phrase, "DISTANT LIGHT").toUpperCase().slice(0, 50),
+    ...(skillId === "scene-to-art" ? {
+      posterTitlePlacement: raw.posterTitlePlacement === "left" || raw.posterTitlePlacement === "bottom"
+        ? raw.posterTitlePlacement : "top" as const,
+      posterTitleColor: typeof raw.posterTitleColor === "string" && /^#[0-9a-f]{6}$/i.test(raw.posterTitleColor)
+        ? raw.posterTitleColor : "#F3F0E8",
+    } : {}),
     panels,
   };
 }

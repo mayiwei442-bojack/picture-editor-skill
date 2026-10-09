@@ -154,6 +154,31 @@ async function composeSurreal(source: SourceImage, collage: Buffer) {
   return renderCanvas(width, height, "#F2E83A", [{ input: fitted, left: 0, top: 0 }]);
 }
 
+async function composeScenePoster(source: SourceImage, panel: Buffer, plan: AnalysisPlan) {
+  const width = source.width;
+  const height = Math.round(width * 4 / 3);
+  const fitted = await fitPanel(panel, width, height);
+  const title = plan.title.toUpperCase().replace(/[^A-Z0-9 '-]/g, "").trim().slice(0, 40) || "FIELD NOTES";
+  const placement = plan.posterTitlePlacement || "top";
+  const vertical = placement === "left";
+  const fontSize = width * 0.145;
+  const available = (vertical ? height : width) * 0.86;
+  const scaleX = Math.min(0.78, available / (title.length * fontSize * 0.75));
+  const color = /^#[0-9a-f]{6}$/i.test(plan.posterTitleColor || "") ? plan.posterTitleColor : "#F3F0E8";
+  const position = vertical
+    ? `translate(${width * 0.14},${height * 0.93}) rotate(-90)`
+    : `translate(${width * 0.07},${height * (placement === "bottom" ? 0.94 : 0.14)})`;
+  const typography = Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
+    <g transform="${position}"><g transform="scale(${scaleX},1)">
+      <text fill="${color}" font-family="DejaVu Sans, Arial, sans-serif" font-weight="700" font-size="${fontSize}" letter-spacing="${fontSize * 0.015}">${escapeXml(title)}</text>
+    </g></g>
+  </svg>`);
+  return renderCanvas(width, height, "#F3F0E8", [
+    { input: fitted, left: 0, top: 0 },
+    { input: typography, left: 0, top: 0 },
+  ]);
+}
+
 async function composeTravel(source: SourceImage, lower: Buffer, plan: AnalysisPlan) {
   const lowerHeight = Math.round(source.height * 1.25);
   const fitted = await fitPanel(lower, source.width, lowerHeight);
@@ -188,8 +213,9 @@ export async function composeArtwork(
     case "photo-editorial":
       return composeEditorial(source, panels[0], plan);
     case "surreal-pop":
-    case "scene-to-art":
       return composeSurreal(source, panels[0]);
+    case "scene-to-art":
+      return composeScenePoster(source, panels[0], plan);
     case "travel-abstraction":
       return composeTravel(source, panels[0], plan);
   }

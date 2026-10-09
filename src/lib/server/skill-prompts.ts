@@ -53,8 +53,8 @@ const blueprints: Record<SkillId, SkillBlueprint> = {
   },
   "scene-to-art": {
     panels: [{ key: "poster", aspectRatio: "3:4" }],
-    analysis: `Design a source-specific art poster, not a photograph with a filter. Select up to three defining identity anchors, spatial direction, one visual proposition, a functional source-derived palette and one primary medium. Choose transparent watercolor for luminous atmosphere (pigment pooling, reserved paper), pop screenprint for graphic subjects (limited inks, halftone, overprint), expressive painting for motion (directional brushwork), ink-wash for contemplative scenes (dry strokes, breathing space), relief print for strong silhouettes (carved black-paper masses), or editorial surrealism for a source-grounded concept (one coherent impossible relationship). A hybrid may use only one supporting process. Choose one layout: monumental crop, asymmetric field, diagonal momentum, fragment and echo, split tension, vertical procession, type-image interlock, or editorial window. Explain the selected medium, layout, focal region, supporting field, negative space, source-specific color roles, lost-edge transition and title placement in the panel prompt. Set title to 1–3 English words, preferably 4–16 letters in total, derived from visible evidence. State the title exactly in the prompt, including its position, scale, direction and controlled overlap; protect defining faces, hands and object proportions. Omit supporting copy to prioritize reliable lettering. Change at least two structural relationships such as scale, crop, placement, overlap or figure-ground.`,
-    imageRules: `Vertical 3:4 aspect ratio, finished art poster. Preserve defining source identity; recompose rather than filter. One medium, one focal anchor, clear image/type hierarchy, active negative space and a source-derived palette. Use physical material marks selectively; dissolve a non-critical contour into exposed substrate. One short exact English title: bold condensed uppercase neo-grotesk, readable, integrated with scene geometry. No other lettering, invented brands, credits, dates, signatures, seals, watermark, frame, mockup, arbitrary decoration or uniform full-image treatment.`,
+    analysis: `Design a source-specific art poster, not a photograph with a filter. Select up to three defining identity anchors, spatial direction, one visual proposition, a functional source-derived palette and one primary medium. Choose transparent watercolor for luminous atmosphere (pigment pooling, reserved paper), pop screenprint for graphic subjects (limited inks, halftone, overprint), expressive painting for motion (directional brushwork), ink-wash for contemplative scenes (dry strokes, breathing space), relief print for strong silhouettes (carved black-paper masses), or editorial surrealism for a source-grounded concept (one coherent impossible relationship). A hybrid may use only one supporting process. Choose one layout: monumental crop, asymmetric field, diagonal momentum, fragment and echo, split tension, vertical procession, type-image interlock, or editorial window. Explain the medium, layout, focal region, supporting field, negative space, source-specific color roles and lost-edge transition in the panel prompt. Return title as 1–3 uppercase English words, preferably 4–16 letters in total, derived from visible evidence. Set posterTitlePlacement to top, bottom or left based on source geometry and posterTitleColor to a high-contrast palette hex color. Title is composed separately: the panel prompt MUST NOT contain the title, copy or instructions to draw text. Reserve the selected edge as a quiet field. Protect faces, hands and object proportions. Change at least two structural relationships such as scale, crop, placement, overlap or figure-ground.`,
+    imageRules: `Vertical 3:4 aspect ratio. Render ORIGINAL ARTWORK ONLY: absolutely no text, letters, numbers, symbols resembling writing, labels, credits, signatures, seals, logos or watermark anywhere, including tiny marks near edges. Preserve defining source identity; recompose rather than filter. One physical medium, one focal anchor, source-derived palette, active negative space and clear hierarchy. Use material marks selectively; dissolve a non-critical contour into exposed substrate. Keep the selected edge quiet and open. No frame, mockup, arbitrary decoration or uniform full-image treatment.`,
   },
 };
 
@@ -88,6 +88,7 @@ The JSON schema is exactly:
   "title": "2 to 4 English words",
   "episodeTitle": "2 to 4 English words",
   "phrase": "1 to 3 uppercase English words",
+  ${skillId === "scene-to-art" ? '"posterTitlePlacement": "top, bottom or left",\n  "posterTitleColor": "high-contrast #RRGGBB from the palette",' : ""}
   "panels": [${expectedPanels}]
 }
 
@@ -96,14 +97,13 @@ Each panel prompt must be self-contained, grounded in the visible photograph, un
 
 export function buildPanelPrompt(
   skillId: SkillId,
-  plan: { summary: string; anchors: string[]; palette: string[]; light: string; emotionalTemperature: string; title: string },
+  plan: { summary: string; anchors: string[]; palette: string[]; light: string; emotionalTemperature: string; title: string; posterTitlePlacement?: "top" | "bottom" | "left" },
   panelPrompt: string,
 ) {
   const blueprint = getBlueprint(skillId);
   if (skillId === "scene-to-art") {
-    // Keep the output contract and exact lettering ahead of the variable brief
-    // so the image API's prompt limit cannot remove these constraints.
-    const contract = `${blueprint.imageRules}\nOnly permitted lettering: ${JSON.stringify(plan.title.toUpperCase())}.\nPalette: ${plan.palette.join(", ")}.\n`;
+    // Lettering is rendered by the compositor; never send it to the image model.
+    const contract = `${blueprint.imageRules}\nReserve a quiet ${plan.posterTitlePlacement || "top"} edge, approximately 18% of the canvas, without marks or lettering.\nPalette: ${plan.palette.join(", ")}.\n`;
     const evidence = `Source: ${plan.summary.slice(0, 180)}. Anchors: ${plan.anchors.join(", ").slice(0, 160)}.\n`;
     return `${contract}${evidence}${panelPrompt}`.slice(0, 1480);
   }

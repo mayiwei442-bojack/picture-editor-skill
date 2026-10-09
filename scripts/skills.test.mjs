@@ -59,15 +59,16 @@ test("all seven catalog entries have a unique ID, cover and blueprint", () => {
   assert.equal(isSkillId("not-a-skill"), false);
 });
 
-test("scene poster preserves the output and typography contract under long input", () => {
+test("scene poster preserves its artwork contract; exact lettering stays out of image generation", () => {
   const prompt = buildPanelPrompt("scene-to-art", plan, "medium: expressive painting; layout: diagonal momentum. ".repeat(100));
   assert.ok(prompt.length <= 1480);
   assert.match(prompt, /Vertical 3:4 aspect ratio/);
-  assert.match(prompt, /Only permitted lettering: "EMBER LINE"/);
-  assert.match(prompt, /no other lettering/i);
+  assert.doesNotMatch(prompt, /EMBER LINE/);
+  assert.match(prompt, /absolutely no text/i);
+  assert.match(prompt, /Reserve a quiet top edge/);
   assert.match(prompt, /watermark/);
   assert.match(prompt, /expressive painting/);
-  assert.doesNotMatch(prompt, /no readable text/);
+  assert.match(buildAnalysisPrompt("scene-to-art", 2), /posterTitlePlacement/);
   assert.match(buildAnalysisPrompt("scene-to-art", 2), /variation index 2/);
   assert.deepEqual(getBlueprint("scene-to-art").panels, [{ key: "poster", aspectRatio: "3:4" }]);
 });
