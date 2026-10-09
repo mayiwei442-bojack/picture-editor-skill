@@ -20,6 +20,7 @@ const plan = {
     { key: "structure", aspectRatio: "16:9", prompt: "Geometric structural abstraction based on the long line, horizon and reflection." },
     { key: "hybrid", aspectRatio: "16:9", prompt: "Hybrid abstraction combining quiet recognisable traces with bold reduced geometry." },
     { key: "collage", aspectRatio: "3:4", prompt: "Vertical surreal pop collage with a black-and-white reality anchor and one impossible giant object." },
+    { key: "poster", aspectRatio: "3:4", prompt: "Vertical 3:4 watercolor art poster. Asymmetric field, a warm directional horizon, pigment pooling and one silhouette dissolving into paper. Large condensed uppercase title AFTER THE HORIZON aligned with the horizon." },
   ],
 };
 

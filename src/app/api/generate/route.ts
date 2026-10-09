@@ -41,7 +41,7 @@ export async function POST(request: Request) {
         skillValue,
         plan,
         panel,
-        skillValue === "surreal-pop" ? referenceDataUrl : undefined,
+        skillValue === "surreal-pop" || skillValue === "scene-to-art" ? referenceDataUrl : undefined,
       )),
     );
 

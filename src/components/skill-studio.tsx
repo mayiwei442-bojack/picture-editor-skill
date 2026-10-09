@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ChangeEvent, DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowIcon, CloseIcon, DownloadIcon, RefreshIcon, UploadIcon } from "./icons";
-import { SkillDefinition, skills } from "@/lib/skills";
+import { SkillDefinition, skillCountLabel, skills } from "@/lib/skills";
 
 type Phase = "empty" | "ready" | "generating" | "done" | "error";
 
@@ -168,7 +168,7 @@ export function SkillStudio() {
         <div className="section-heading">
           <div>
             <p className="eyebrow">SELECT A VISUAL LANGUAGE</p>
-            <h2 id="archive-heading">六种 Skill</h2>
+            <h2 id="archive-heading">{skillCountLabel}种 Skill</h2>
           </div>
           <p>每次仅处理一张图片，并输出一张完整作品。</p>
         </div>

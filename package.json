@@ -9,6 +9,7 @@
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
+    "test:skills": "node --test scripts/skills.test.mjs",
     "mock:minimax": "node scripts/mock-minimax.mjs"
   },
   "dependencies": {

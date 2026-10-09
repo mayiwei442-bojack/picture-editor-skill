@@ -1,4 +1,5 @@
 import { SkillStudio } from "@/components/skill-studio";
+import { skillCountLabel, skills } from "@/lib/skills";
 
 export default function Home() {
   return (
@@ -9,7 +10,7 @@ export default function Home() {
         </a>
         <div className="header-note">
           <span>PUBLIC EDITION</span>
-          <span>06 VISUAL SKILLS</span>
+          <span>{String(skills.length).padStart(2, "0")} VISUAL SKILLS</span>
         </div>
       </header>
 
@@ -20,7 +21,7 @@ export default function Home() {
           <h1>
             一张照片，
             <br />
-            六种观看方式。
+            {skillCountLabel}种观看方式。
           </h1>
           <p className="hero-intro">
             选择一种视觉语言，把你的照片重新组织成一张完整作品。

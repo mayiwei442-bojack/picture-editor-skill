@@ -51,6 +51,11 @@ const blueprints: Record<SkillId, SkillBlueprint> = {
     analysis: `Read the travel photograph for location character rather than landmark recognition: horizon, movement, local color, weather and one memorable spatial gesture. The untouched source remains above. Propose a 1–3 word uppercase English phrase for the archive caption.`,
     imageRules: `Clean warm ivory #F3F0E8 field with 75–88% empty space. One compact source-derived abstract motif occupying roughly 30–42% of the width and no more than 28% of the panel height. Refined travel archive, precise placement, restrained colors, no scenery reconstruction. Leave text-free margins; no letters, numbers, logo, frame or watermark.`,
   },
+  "scene-to-art": {
+    panels: [{ key: "poster", aspectRatio: "3:4" }],
+    analysis: `Design a source-specific art poster, not a photograph with a filter. Select up to three defining identity anchors, spatial direction, one visual proposition, a functional source-derived palette and one primary medium. Choose transparent watercolor for luminous atmosphere (pigment pooling, reserved paper), pop screenprint for graphic subjects (limited inks, halftone, overprint), expressive painting for motion (directional brushwork), ink-wash for contemplative scenes (dry strokes, breathing space), relief print for strong silhouettes (carved black-paper masses), or editorial surrealism for a source-grounded concept (one coherent impossible relationship). A hybrid may use only one supporting process. Choose one layout: monumental crop, asymmetric field, diagonal momentum, fragment and echo, split tension, vertical procession, type-image interlock, or editorial window. Explain the selected medium, layout, focal region, supporting field, negative space, source-specific color roles, lost-edge transition and title placement in the panel prompt. Set title to 1–3 English words, preferably 4–16 letters in total, derived from visible evidence. State the title exactly in the prompt, including its position, scale, direction and controlled overlap; protect defining faces, hands and object proportions. Omit supporting copy to prioritize reliable lettering. Change at least two structural relationships such as scale, crop, placement, overlap or figure-ground.`,
+    imageRules: `Vertical 3:4 aspect ratio, finished art poster. Preserve defining source identity; recompose rather than filter. One medium, one focal anchor, clear image/type hierarchy, active negative space and a source-derived palette. Use physical material marks selectively; dissolve a non-critical contour into exposed substrate. One short exact English title: bold condensed uppercase neo-grotesk, readable, integrated with scene geometry. No other lettering, invented brands, credits, dates, signatures, seals, watermark, frame, mockup, arbitrary decoration or uniform full-image treatment.`,
+  },
 };
 
 export function getBlueprint(skillId: SkillId) {
@@ -91,10 +96,17 @@ Each panel prompt must be self-contained, grounded in the visible photograph, un
 
 export function buildPanelPrompt(
   skillId: SkillId,
-  plan: { summary: string; anchors: string[]; palette: string[]; light: string; emotionalTemperature: string },
+  plan: { summary: string; anchors: string[]; palette: string[]; light: string; emotionalTemperature: string; title: string },
   panelPrompt: string,
 ) {
   const blueprint = getBlueprint(skillId);
+  if (skillId === "scene-to-art") {
+    // Keep the output contract and exact lettering ahead of the variable brief
+    // so the image API's prompt limit cannot remove these constraints.
+    const contract = `${blueprint.imageRules}\nOnly permitted lettering: ${JSON.stringify(plan.title.toUpperCase())}.\nPalette: ${plan.palette.join(", ")}.\n`;
+    const evidence = `Source: ${plan.summary.slice(0, 180)}. Anchors: ${plan.anchors.join(", ").slice(0, 160)}.\n`;
+    return `${contract}${evidence}${panelPrompt}`.slice(0, 1480);
+  }
   return [
     panelPrompt,
     `Source evidence: ${plan.summary}`,

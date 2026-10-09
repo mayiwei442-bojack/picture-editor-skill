@@ -5,6 +5,7 @@ export const skillIds = [
   "photo-editorial",
   "surreal-pop",
   "travel-abstraction",
+  "scene-to-art",
 ] as const;
 
 export type SkillId = (typeof skillIds)[number];
@@ -95,7 +96,21 @@ export const skills: SkillDefinition[] = [
     output: "原图 + 旅行档案 / PNG",
     stages: ["提取地点印象", "生成留白图形", "合成旅行档案"],
   },
+  {
+    id: "scene-to-art",
+    index: "07",
+    nameZh: "场景艺术海报",
+    nameEn: "Scene to Art Lab",
+    kicker: "从照片到艺术海报",
+    description: "从照片中选择绘画媒介，以主体特征、构图与英文排版生成艺术海报。",
+    cover: "/card-art/scene-to-art.jpg",
+    accent: "#e9c15e",
+    output: "3:4 竖版艺术海报 / PNG",
+    stages: ["识别主体与场景", "选择媒介并重构海报", "输出艺术海报"],
+  },
 ];
+
+export const skillCountLabel = new Intl.NumberFormat("zh-CN", { numberingSystem: "hanidec" }).format(skills.length);
 
 export function isSkillId(value: string): value is SkillId {
   return skillIds.includes(value as SkillId);

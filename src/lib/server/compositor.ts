@@ -188,6 +188,7 @@ export async function composeArtwork(
     case "photo-editorial":
       return composeEditorial(source, panels[0], plan);
     case "surreal-pop":
+    case "scene-to-art":
       return composeSurreal(source, panels[0]);
     case "travel-abstraction":
       return composeTravel(source, panels[0], plan);

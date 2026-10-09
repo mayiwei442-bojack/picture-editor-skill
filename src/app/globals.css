@@ -872,6 +872,7 @@ a {
   }
 
   .skill-card {
+    width: 100%;
     min-height: 520px;
     aspect-ratio: 0.82;
     border-radius: 23px;

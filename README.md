@@ -25,14 +25,14 @@ MINIMAX_IMAGE_MODEL=image-01
 
 ## MVP 范围
 
-- 一个页面，六张圆角 Skill 卡片
+- 一个页面，七张圆角 Skill 卡片
 - 一张图片 + 一个 Skill + 一张成品
 - JPG / PNG / WebP 上传，最大 15 MB、2000 万像素
 - 输出无水印 PNG，可直接下载或重新生成
 - 不做用户、历史记录、数据库和限流
 - 上传图片及生成中间图仅保存在单次请求的运行内存中，不写入磁盘、不进缓存；响应结束后释放
 
-## 六个 Skill
+## 七个 Skill
 
 1. Starryear Odyssey：原片与抽象续章组成档案双联画
 2. Threefold Memory：感知、现场、记忆三层纵向画幅
@@ -40,19 +40,20 @@ MINIMAX_IMAGE_MODEL=image-01
 4. Photo Abstract Editorial：原片与象牙白抽象编辑版面
 5. Surreal Pop Collage：3:4 黑白现实锚点与巨物波普拼贴
 6. Travel Photo Abstraction：原片与大面积留白的旅行档案
+7. Scene to Art Lab：根据照片选择绘画媒介，重构为带英文标题的 3:4 艺术海报
 
-前四联画/双联画与旅行版式会保留原片区域的原始像素尺寸；超现实波普按照 Skill 定义输出 3:4 画幅。
+前四联画/双联画与旅行版式会保留原片区域的原始像素尺寸；超现实波普与场景艺术海报按照 Skill 定义输出 3:4 画幅，宽度沿用原图像素宽度。
 
 ## 生成架构
 
 1. `MiniMax-M3` 读取上传照片，提取视觉锚点、色彩、光线和分镜方案。
-2. `image-01` 按当前 Skill 生成抽象面板；超现实波普会把上传图片作为参考图传入。
+2. `image-01` 按当前 Skill 生成画面；超现实波普与场景艺术海报会把上传图片作为参考图传入。场景艺术海报单独允许场景相关的英文标题，不受其余 Skill 的无文字限制。
 3. `sharp` 在服务器内存中按 Skill 规则合成最终 PNG，不创建临时文件。
 
 核心接口是 `POST /api/generate`，使用 `multipart/form-data`：
 
 - `image`：一张图片
-- `skillId`：六个 Skill ID 之一
+- `skillId`：七个 Skill ID 之一
 - `attempt`：重新生成次数
 
 ## 验证
@@ -60,6 +61,7 @@ MINIMAX_IMAGE_MODEL=image-01
 ```bash
 pnpm typecheck
 pnpm lint
+pnpm test:skills
 pnpm build
 ```
 
@@ -73,3 +75,4 @@ pnpm build
 - [Photo Abstract Editorial](https://github.com/mayiwei442-bojack/photo-abstract-editorial)
 - [Surreal Pop Collage](https://github.com/mayiwei442-bojack/surreal-pop-collage)
 - [Travel Photo Abstraction](https://github.com/mayiwei442-bojack/travel-photo-abstraction)
+- [Scene to Art Lab](https://github.com/N1kO724/scene-to-art-lab)：卡片使用 `docs/images/gallery-01.jpg` 原始展示图。
