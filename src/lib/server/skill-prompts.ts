@@ -103,7 +103,7 @@ export function buildPanelPrompt(
   const blueprint = getBlueprint(skillId);
   if (skillId === "scene-to-art") {
     // Lettering is rendered by the compositor; never send it to the image model.
-    const contract = `${blueprint.imageRules}\nReserve a quiet ${plan.posterTitlePlacement || "top"} edge, approximately 18% of the canvas, without marks or lettering.\nPalette: ${plan.palette.join(", ")}.\n`;
+    const contract = `${blueprint.imageRules}\nKeep defining anchors inside the central 88%; outer 6% on each edge is expendable print bleed. Reserve a quiet ${plan.posterTitlePlacement || "top"} edge, approximately 18% of the canvas, without marks or lettering.\nPalette: ${plan.palette.join(", ")}.\n`;
     const evidence = `Source: ${plan.summary.slice(0, 180)}. Anchors: ${plan.anchors.join(", ").slice(0, 160)}.\n`;
     return `${contract}${evidence}${panelPrompt}`.slice(0, 1480);
   }

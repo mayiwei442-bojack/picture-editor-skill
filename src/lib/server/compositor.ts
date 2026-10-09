@@ -1,6 +1,7 @@
 import "server-only";
 
 import sharp, { type OverlayOptions } from "sharp";
+import path from "node:path";
 import { SkillId } from "@/lib/skills";
 import { AnalysisPlan } from "./minimax";
 
@@ -157,25 +158,47 @@ async function composeSurreal(source: SourceImage, collage: Buffer) {
 async function composeScenePoster(source: SourceImage, panel: Buffer, plan: AnalysisPlan) {
   const width = source.width;
   const height = Math.round(width * 4 / 3);
-  const fitted = await fitPanel(panel, width, height);
+  const panelMetadata = await sharp(panel).metadata();
+  if (!panelMetadata.width || !panelMetadata.height) throw new Error("无法读取海报画面尺寸。");
+  // The brief reserves outer bleed, excluding incidental model-generated
+  // edge marks and mock borders from the finished artwork.
+  const bleedX = Math.floor(panelMetadata.width * 0.06);
+  const bleedY = Math.floor(panelMetadata.height * 0.06);
+  const fitted = await sharp(panel).extract({
+    left: bleedX, top: bleedY,
+    width: panelMetadata.width - bleedX * 2, height: panelMetadata.height - bleedY * 2,
+  }).resize(width, height, { fit: "cover" }).png().toBuffer();
   const title = plan.title.toUpperCase().replace(/[^A-Z0-9 '-]/g, "").trim().slice(0, 40) || "FIELD NOTES";
   const placement = plan.posterTitlePlacement || "top";
   const vertical = placement === "left";
-  const fontSize = width * 0.145;
-  const available = (vertical ? height : width) * 0.86;
-  const scaleX = Math.min(0.78, available / (title.length * fontSize * 0.75));
-  const color = /^#[0-9a-f]{6}$/i.test(plan.posterTitleColor || "") ? plan.posterTitleColor : "#F3F0E8";
-  const position = vertical
-    ? `translate(${width * 0.14},${height * 0.93}) rotate(-90)`
-    : `translate(${width * 0.07},${height * (placement === "bottom" ? 0.94 : 0.14)})`;
-  const typography = Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-    <g transform="${position}"><g transform="scale(${scaleX},1)">
-      <text fill="${color}" font-family="DejaVu Sans, Arial, sans-serif" font-weight="700" font-size="${fontSize}" letter-spacing="${fontSize * 0.015}">${escapeXml(title)}</text>
-    </g></g>
-  </svg>`);
+  const textWidth = Math.max(1, Math.floor((vertical ? height : width) * 0.86));
+  const textHeight = Math.max(1, Math.floor(width * 0.12));
+  const left = Math.floor(width * 0.07);
+  const top = placement === "bottom" ? Math.floor(height * 0.94) - textHeight : Math.floor(height * 0.06);
+  const stats = await sharp(fitted).extract({ left, top,
+    width: vertical ? textHeight : textWidth,
+    height: vertical ? textWidth : textHeight,
+  }).stats();
+  const luminance = (rgb: number[]) => rgb.map((value) => {
+    const channel = value / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+  const backgroundLight = luminance(stats.channels.slice(0, 3).map((channel) => channel.mean));
+  let color = /^#[0-9a-f]{6}$/i.test(plan.posterTitleColor || "") ? plan.posterTitleColor! : "#F3F0E8";
+  const titleLight = luminance([1, 3, 5].map((offset) => Number.parseInt(color.slice(offset, offset + 2), 16)));
+  if ((Math.max(backgroundLight, titleLight) + 0.05) / (Math.min(backgroundLight, titleLight) + 0.05) < 3) {
+    color = backgroundLight > 0.18 ? "#191817" : "#F3F0E8";
+  }
+  const text = await sharp({ text: {
+    text: `<span foreground="${color}">${escapeXml(title)}</span>`,
+    font: "Barlow Condensed SemiBold",
+    fontfile: path.join(process.cwd(), "src/lib/server/assets/BarlowCondensed-SemiBold.ttf"),
+    width: textWidth, height: textHeight, rgba: true, wrap: "none",
+  } }).png().toBuffer();
+  const typography = await sharp(text).rotate(vertical ? 270 : 0).png().toBuffer();
   return renderCanvas(width, height, "#F3F0E8", [
     { input: fitted, left: 0, top: 0 },
-    { input: typography, left: 0, top: 0 },
+    { input: typography, left, top },
   ]);
 }
 

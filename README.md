@@ -67,7 +67,7 @@ pnpm build
 
 ## 示例作品来源
 
-卡片背景使用已获授权的 Skill 示例作品。超现实波普卡片图为本项目使用 OpenAI 图像生成工具制作的原创示例，提示词方向为：竖版纽约街景波普拼贴、黑白现实锚点、黄红平涂色块、单一巨大交通灯、弧形鸽群、无文字与水印。
+卡片背景使用各 Skill 的示例作品。超现实波普卡片图为本项目使用 OpenAI 图像生成工具制作的原创示例，提示词方向为：竖版纽约街景波普拼贴、黑白现实锚点、黄红平涂色块、单一巨大交通灯、弧形鸽群、无文字与水印。
 
 - [Starryear Odyssey](https://github.com/mayiwei442-bojack/Starryear-Odyssey)
 - [Starryear Threefold Memory](https://github.com/mayiwei442-bojack/Starryear-Threefold-Memory)
