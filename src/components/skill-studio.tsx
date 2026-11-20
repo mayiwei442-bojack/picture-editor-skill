@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { ChangeEvent, DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import { ArrowIcon, CloseIcon, DownloadIcon, RefreshIcon, UploadIcon } from "./icons";
-import { SkillDefinition, skillCountLabel, skills } from "@/lib/skills";
+import { type SkillDefinition, skills } from "@/lib/skills";
 
 type Phase = "empty" | "ready" | "generating" | "done" | "error";
 
@@ -164,15 +164,7 @@ export function SkillStudio() {
 
   return (
     <>
-      <section className="archive-section" aria-labelledby="archive-heading">
-        <div className="section-heading">
-          <div>
-            <p className="eyebrow">SELECT A VISUAL LANGUAGE</p>
-            <h2 id="archive-heading">{skillCountLabel}种 Skill</h2>
-          </div>
-          <p>每次仅处理一张图片，并输出一张完整作品。</p>
-        </div>
-
+      <div className="album-page">
         <div className="skill-grid">
           {skills.map((skill) => (
             <button
@@ -180,26 +172,25 @@ export function SkillStudio() {
               key={skill.id}
               type="button"
               onClick={() => openStudio(skill)}
-              style={{ "--accent": skill.accent } as React.CSSProperties}
-              aria-label={`选择 ${skill.nameZh}`}
+              aria-label={`${skill.nameZh}，开始创作`}
+              aria-describedby={`skill-description-${skill.id}`}
+              aria-haspopup="dialog"
             >
-              <Image
-                className="skill-card-image"
-                src={skill.cover}
-                alt=""
-                fill
-                loading="eager"
-                sizes="(max-width: 760px) 100vw, (max-width: 1100px) 50vw, 33vw"
-              />
-              <span className="skill-card-shade" />
-              <span className="skill-card-topline">
-                <span>{skill.index}</span>
-                <span>{skill.kicker}</span>
+              <span className="skill-card-mat">
+                <span className="skill-card-art">
+                  <Image
+                    className="skill-card-image"
+                    src={skill.cover}
+                    alt=""
+                    fill
+                    sizes="(max-width: 580px) 90vw, (max-width: 1020px) 43vw, (max-width: 1440px) 22vw, 290px"
+                  />
+                </span>
               </span>
               <span className="skill-card-copy">
                 <span className="skill-card-en">{skill.nameEn}</span>
                 <strong>{skill.nameZh}</strong>
-                <span className="skill-card-description">{skill.description}</span>
+                <span className="skill-card-description" id={`skill-description-${skill.id}`}>{skill.description}</span>
               </span>
               <span className="skill-card-action">
                 开始创作 <ArrowIcon />
@@ -207,15 +198,11 @@ export function SkillStudio() {
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
       {selected && (
         <div className="studio-shell" role="dialog" aria-modal="true" aria-labelledby="studio-title">
           <div className="studio-topbar">
-            <div className="studio-brand">
-              <span>{selected.index}</span>
-              <span>IMAGE FIELD / STUDIO</span>
-            </div>
             <button
               className="icon-button"
               type="button"
@@ -233,7 +220,6 @@ export function SkillStudio() {
                 <div className="result-frame">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={resultUrl} alt={`${selected.nameZh} 生成结果`} />
-                  <span className="result-badge">PNG · READY</span>
                 </div>
               ) : previewUrl ? (
                 <div className="preview-frame">
@@ -242,7 +228,6 @@ export function SkillStudio() {
                   {phase === "generating" && (
                     <div className="processing-veil" aria-hidden="true">
                       <span className="scanner" />
-                      <span>PROCESSING</span>
                     </div>
                   )}
                 </div>
@@ -273,7 +258,7 @@ export function SkillStudio() {
               </div>
 
               <div className="studio-spec">
-                <span>OUTPUT</span>
+                <span>输出格式</span>
                 <strong>{selected.output}</strong>
               </div>
 
