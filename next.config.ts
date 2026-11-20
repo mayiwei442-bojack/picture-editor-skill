@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: __dirname,
   poweredByHeader: false,
   outputFileTracingIncludes: {
     "/api/generate": ["./src/lib/server/assets/*"],

@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 import { skillCountLabel } from "@/lib/skills";
 
-const editorial = Cormorant_Garamond({
-  subsets: ["latin"],
-  weight: ["500", "600", "700"],
+const editorial = localFont({
+  src: "./fonts/CormorantGaramond-Latin.woff2",
+  weight: "500 700",
   variable: "--font-editorial",
   display: "swap",
+  adjustFontFallback: "Times New Roman",
 });
 
 export const metadata: Metadata = {
