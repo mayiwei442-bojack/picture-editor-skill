@@ -157,10 +157,10 @@ export async function analyzeImage(
           },
         ],
         temperature: 0.28,
-        max_completion_tokens: skillId === "scene-to-art" ? 4096 : 2048,
+        max_completion_tokens: 4096,
         // This constrained, single-pass extraction needs a complete JSON answer,
         // not a reasoning trace that can consume the completion budget.
-        ...(skillId === "scene-to-art" && config.chatModel === "MiniMax-M3"
+        ...(config.chatModel === "MiniMax-M3"
           ? { thinking: { type: "disabled" } }
           : {}),
       }),
@@ -178,16 +178,20 @@ export async function analyzeImage(
   }
 
   const payload: unknown = await response.json();
+  const firstChoice = isRecord(payload) && Array.isArray(payload.choices) ? payload.choices[0] : null;
+  const finishReason = isRecord(firstChoice) ? firstChoice.finish_reason : undefined;
   const content = extractMessageContent(payload);
-  if (!content) throw new GenerationError("MiniMax 没有返回画面分析，请重新生成。");
   try {
+    if (finishReason === "length") {
+      throw new GenerationError("MiniMax 读图方案超出输出长度，请重新生成。");
+    }
+    if (!content) throw new GenerationError("MiniMax 没有返回画面分析，请重新生成。");
     return { plan: normalizePlan(parseJsonObject(content), skillId), referenceDataUrl: imageUrl };
   } catch (cause) {
-    const firstChoice = isRecord(payload) && Array.isArray(payload.choices) ? payload.choices[0] : null;
     // Operational metadata only: never log the photograph, prompt or reasoning.
     console.warn("MiniMax plan validation failed", {
       skillId,
-      finishReason: isRecord(firstChoice) ? firstChoice.finish_reason : undefined,
+      finishReason,
       responseCharacters: content.length,
     });
     throw cause;

@@ -79,7 +79,7 @@ test("other skills retain their existing no-readable-text prompt behavior", () =
   }
 });
 
-test("scene analysis requests a direct JSON answer with enough output budget", async () => {
+test("all skills request a direct MiniMax-M3 analysis with enough output budget", async () => {
   const { analyzeImage } = loadModule("src/lib/server/minimax.ts");
   const originalFetch = globalThis.fetch;
   const originalKey = process.env.MINIMAX_API_KEY;
@@ -87,18 +87,29 @@ test("scene analysis requests a direct JSON answer with enough output budget", a
   process.env.MINIMAX_API_KEY = "unit-test-only";
   process.env.MINIMAX_CHAT_MODEL = "MiniMax-M3";
   let sent;
+  let activeSkill;
+  let finishReason = "stop";
   globalThis.fetch = async (_url, options) => {
     sent = JSON.parse(options.body);
-    return Response.json({ choices: [{ finish_reason: "stop", message: { content: JSON.stringify({
-      ...plan, panels: [{ key: "poster", aspectRatio: "3:4", prompt: "A source-specific expressive painting poster." }],
+    return Response.json({ choices: [{ finish_reason: finishReason, message: { content: JSON.stringify({
+      ...plan,
+      panels: getBlueprint(activeSkill).panels.map((panel) => ({
+        ...panel,
+        prompt: "A source-specific visual composition.",
+      })),
     }) } }] });
   };
   try {
-    const result = await analyzeImage(Buffer.from("fixture"), "image/png", "scene-to-art", 0);
-    assert.deepEqual(sent.thinking, { type: "disabled" });
-    assert.equal(sent.max_completion_tokens, 4096);
-    assert.equal(result.plan.title, "EMBER LINE");
-    assert.equal(result.plan.panels[0].key, "poster");
+    for (const id of skillIds) {
+      activeSkill = id;
+      const result = await analyzeImage(Buffer.from("fixture"), "image/png", id, 0);
+      assert.deepEqual(sent.thinking, { type: "disabled" }, id);
+      assert.equal(sent.max_completion_tokens, 4096, id);
+      assert.equal(result.plan.title, "EMBER LINE");
+      assert.deepEqual(result.plan.panels.map(({ key }) => key), getBlueprint(id).panels.map(({ key }) => key));
+    }
+    finishReason = "length";
+    await assert.rejects(analyzeImage(Buffer.from("fixture"), "image/png", activeSkill, 0), /超出输出长度/);
   } finally {
     globalThis.fetch = originalFetch;
     if (originalKey === undefined) delete process.env.MINIMAX_API_KEY;
